@@ -4,5 +4,5 @@ idf_component_register(
     INCLUDE_DIRS
         "."
     REQUIRES
-        
+        ssd1306 driver esp_driver_spi esp_driver_i2c
     )

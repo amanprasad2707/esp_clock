@@ -2,5 +2,8 @@
 # CMakeLists in this exact order for cmake to work correctly
 cmake_minimum_required(VERSION 3.22)
 
+# Tell ESP-IDF to scan the nested library folder for the actual component
+set(EXTRA_COMPONENT_DIRS "components/ssd1306/components")
+
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
 project(esp_clock)
