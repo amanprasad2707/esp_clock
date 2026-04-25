@@ -1,0 +1,4 @@
+[wokwi]
+version = 1
+firmware = 'build/esp_clock.bin'
+elf = 'build/esp_clock.elf'
