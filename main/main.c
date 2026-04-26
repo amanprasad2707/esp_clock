@@ -1,14 +1,39 @@
 #include "esp_idf_version.h"
 #include "ssd1306.h"
+#include "freertos/FreeRTOS.h"
+#include "menu.h"
+#include "rotary_encoder.h"
 
 
 #define SDA_GPIO 21
 #define SCL_GPIO 22
 
+SSD1306_t dev;
 
+
+static void ui_task(void *arg){
+    /* Queue that receives input events from the rotary encoder */
+    QueueHandle_t event_queue = rotary_encoder_get_queue();
+
+    menu_init();
+    menu_render();   // display initial screen
+
+    while (1) {
+        ui_event_t event;
+
+        /* Wait indefinitely for next UI event (blocking call) */
+        if (xQueueReceive(event_queue, &event, portMAX_DELAY)) {
+
+            /* Update menu state based on input (rotate/button pressed) */
+            menu_handle_event(event);
+
+            /* Render menu only if state changed */
+            menu_render();
+        }
+    }
+}
 
 void app_main(void){
-    SSD1306_t dev;
 
     // Initialize display (I2C mode)
     i2c_master_init(&dev, SDA_GPIO, SCL_GPIO, -1);
@@ -19,9 +44,8 @@ void app_main(void){
     // Clear screen
     ssd1306_clear_screen(&dev, false);
 
-    // Display text
-    ssd1306_display_text(&dev, 0, "Hello", 5, false);
-    ssd1306_display_text(&dev, 1, "World", 5, false);
+    rotary_encoder_init();
 
+    xTaskCreate(ui_task, "ui_task", 4096, NULL, 5, NULL);
 
 }
