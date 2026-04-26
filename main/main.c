@@ -5,8 +5,8 @@
 #include "rotary_encoder.h"
 
 
-#define SDA_GPIO 21
-#define SCL_GPIO 22
+#define OLED_SDA_PIN  21
+#define OLED_SCL_PIN  22
 
 SSD1306_t dev;
 
