@@ -1,3 +1,6 @@
 [submodule "components/ssd1306"]
 	path = components/ssd1306
 	url = https://github.com/nopnop2002/esp-idf-ssd1306
+[submodule "components/u8g2"]
+	path = components/u8g2
+	url = https://github.com/olikraus/u8g2.git
