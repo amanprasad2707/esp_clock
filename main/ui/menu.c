@@ -159,3 +159,16 @@ void menu_handle_event(ui_event_t event){
             break;
     }
 }
+
+
+void clock_render(void){
+    // todo: replace this with RTC data later
+    char line1[20];
+    char line2[20];
+
+    snprintf(line1, sizeof(line1), "12:45:30");
+    snprintf(line2, sizeof(line2), " 26 Apr 2026 ");
+
+    ssd1306_display_text_x3(&dev, 0, line1, 16, false);
+    ssd1306_display_text(&dev, 4, line2, 16, false);
+}

@@ -10,3 +10,4 @@ void menu_next(void);
 void menu_prev(void);
 void menu_select(void);
 void menu_handle_event(ui_event_t event);
+void clock_render(void);
