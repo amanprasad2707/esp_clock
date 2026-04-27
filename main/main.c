@@ -3,6 +3,7 @@
 #include "freertos/FreeRTOS.h"
 #include "menu.h"
 #include "rotary_encoder.h"
+#include "u8g2.h"
 
 
 #define OLED_SDA_PIN  21

@@ -8,5 +8,5 @@ idf_component_register(
         "ui"
         "rotary_encoder"
     REQUIRES
-        ssd1306 driver esp_driver_spi esp_driver_i2c
+        ssd1306 u8g2 driver esp_driver_spi esp_driver_i2c
     )
