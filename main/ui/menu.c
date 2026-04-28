@@ -1,12 +1,11 @@
 #include <string.h>
-
+#include <stdio.h>
 
 #include "menu.h"
 #include "esp_idf_version.h"
-#include "ssd1306.h"
 #include "esp_log.h"
+#include "display.h"
 
-extern SSD1306_t dev;       // defined in main
 static bool needs_redraw = true;
 static const char *TAG = "menu";
 
@@ -115,21 +114,28 @@ void menu_render(void){
         return;
     }
 
+    display_clear();   // clear buffer once
+    display_set_font(u8g2_font_6x10_tf);
+
     for (int i = 0; i < 8; i++) {
         char buffer[20];
 
         if (i < menu_state.item_count) {
             if (i == menu_state.selected_index)
-                snprintf(buffer, sizeof(buffer), "> %-14s", menu_state.items[i].label);
+                snprintf(buffer, sizeof(buffer), "> %s", menu_state.items[i].label);
             else
-                snprintf(buffer, sizeof(buffer), "  %-14s", menu_state.items[i].label);
-
+                snprintf(buffer, sizeof(buffer), "  %s", menu_state.items[i].label);
         } else {
-            snprintf(buffer, sizeof(buffer), "                ");
+            snprintf(buffer, sizeof(buffer), " ");
         }
 
-        ssd1306_display_text(&dev, i, buffer, 16, false);
+        // Y position = line height * index
+        int y = (i + 1) * 10;   // 10px font height
+
+        display_draw_text(0, y, buffer);
     }
+
+    display_update();   // send buffer ONCE
 
     needs_redraw = false;
 }
@@ -162,13 +168,24 @@ void menu_handle_event(ui_event_t event){
 
 
 void clock_render(void){
-    // todo: replace this with RTC data later
-    char line1[20];
-    char line2[20];
+    // TODO: replace with RTC data
+    char time_str[20];
+    char date_str[20];
 
-    snprintf(line1, sizeof(line1), "12:45:30");
-    snprintf(line2, sizeof(line2), " 26 Apr 2026 ");
+    snprintf(time_str, sizeof(time_str), "12:45:30");
+    snprintf(date_str, sizeof(date_str), "26 Apr 2026");
 
-    ssd1306_display_text_x3(&dev, 0, line1, 16, false);
-    ssd1306_display_text(&dev, 4, line2, 16, false);
+    display_clear();
+
+    // -------- BIG TIME --------
+    display_set_font(u8g2_font_logisoso24_tr);
+
+    // center horizontally (approx)
+    display_draw_text(0, 40, time_str);
+
+    // -------- DATE --------
+    display_set_font(u8g2_font_6x10_tf);
+    display_draw_text(20, 60, date_str);
+
+    display_update();
 }
