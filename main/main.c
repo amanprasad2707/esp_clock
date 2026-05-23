@@ -1,21 +1,14 @@
 #include "esp_idf_version.h"
-#include "ssd1306.h"
 #include "freertos/FreeRTOS.h"
 #include "menu.h"
 #include "rotary_encoder.h"
-
-
-#define OLED_SDA_PIN  21
-#define OLED_SCL_PIN  22
+#include "display.h"
 
 
 typedef enum {
     UI_STATE_CLOCK,
     UI_STATE_MENU
 } ui_screen_t;
-
-
-SSD1306_t dev;
 static ui_screen_t current_screen = UI_STATE_CLOCK;
 
 
@@ -58,16 +51,11 @@ static void ui_task(void *arg){
     }
 }
 
+
 void app_main(void){
 
-    // Initialize display (I2C mode)
-    i2c_master_init(&dev, OLED_SDA_PIN, OLED_SCL_PIN, -1);
-
-    // Initialize SSD1306
-    ssd1306_init(&dev, 128, 64);
-
-    // Clear screen
-    ssd1306_clear_screen(&dev, false);
+    display_init();
+    display_clear();
 
     rotary_encoder_init();
 
