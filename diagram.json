@@ -18,7 +18,8 @@
       "top": -45.6,
       "left": 88.2,
       "attrs": { "volume": "0.1" }
-    }
+    },
+    { "type": "wokwi-ds1307", "id": "rtc1", "top": -216.6, "left": 268.9, "attrs": {} }
   ],
   "connections": [
     [ "esp:TX0", "$serialMonitor:RX", "", [] ],
@@ -33,7 +34,11 @@
     [ "oled1:GND", "esp:GND.1", "black", [ "v-19.2", "h-57.6", "v163.2", "h-249.3" ] ],
     [ "bz1:1", "esp:GND.1", "black", [ "v0" ] ],
     [ "bz1:2", "esp:D5", "green", [ "v0" ] ],
-    [ "esp:D2", "encoder1:DT", "blue", [ "h210.9", "v-154.4" ] ]
+    [ "esp:D2", "encoder1:DT", "blue", [ "h210.9", "v-154.4" ] ],
+    [ "rtc1:GND", "esp:GND.1", "black", [ "h-19.2", "v144", "h0", "v144" ] ],
+    [ "rtc1:5V", "esp:VIN", "red", [ "h-393.6", "v-0.4" ] ],
+    [ "rtc1:SDA", "oled1:SDA", "white", [ "h-38.4", "v86.1", "h105.6" ] ],
+    [ "rtc1:SCL", "oled1:SCL", "#8f4814", [ "h-28.8", "v57.4", "h86.4" ] ]
   ],
   "dependencies": {}
 }
