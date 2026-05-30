@@ -5,7 +5,6 @@
 
 
 static u8g2_t u8g2;
-static i2c_master_dev_handle_t oled_dev;
 
 void display_init(void){
     ESP_ERROR_CHECK(i2c_hal_init());
