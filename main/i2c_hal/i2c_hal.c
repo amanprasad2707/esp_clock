@@ -21,3 +21,13 @@ esp_err_t i2c_hal_init(void){
 i2c_master_bus_handle_t i2c_hal_get_bus(void){
     return bus_handle;
 }
+
+esp_err_t i2c_hal_add_device(uint16_t addr, uint32_t speed, i2c_master_dev_handle_t *dev){
+    i2c_device_config_t dev_cfg = {
+        .dev_addr_length = I2C_ADDR_BIT_LEN_7,
+        .device_address = addr,
+        .scl_speed_hz = speed,
+    };
+
+    return i2c_master_bus_add_device(bus_handle, &dev_cfg, dev);
+}
