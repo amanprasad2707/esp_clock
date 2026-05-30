@@ -3,6 +3,8 @@
 #include "menu.h"
 #include "rotary_encoder.h"
 #include "display.h"
+#include "i2c_hal.h"
+#include "driver/i2c_master.h"
 
 
 typedef enum {
@@ -53,6 +55,13 @@ static void ui_task(void *arg){
 
 
 void app_main(void){
+
+    ESP_ERROR_CHECK(i2c_hal_init());
+
+    i2c_master_bus_handle_t bus = i2c_hal_get_bus();
+
+    printf("I2C bus initialized\n");
+
 
     display_init();
     display_clear();
