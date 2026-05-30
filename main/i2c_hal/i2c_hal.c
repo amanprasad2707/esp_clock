@@ -23,6 +23,10 @@ i2c_master_bus_handle_t i2c_hal_get_bus(void){
 }
 
 esp_err_t i2c_hal_add_device(uint16_t addr, uint32_t speed, i2c_master_dev_handle_t *dev){
+    if(bus_handle == NULL){
+        return ESP_ERR_INVALID_STATE;
+    }
+    
     i2c_device_config_t dev_cfg = {
         .dev_addr_length = I2C_ADDR_BIT_LEN_7,
         .device_address = addr,
