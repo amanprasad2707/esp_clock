@@ -1,6 +1,6 @@
 #include "i2c_hal.h"
 
-i2c_master_bus_handle_t bus_handle = NULL;
+static i2c_master_bus_handle_t bus_handle = NULL;
 
 esp_err_t i2c_hal_init(void){
     if (bus_handle != NULL){
