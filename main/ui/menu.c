@@ -5,9 +5,16 @@
 #include "esp_idf_version.h"
 #include "esp_log.h"
 #include "display.h"
+#include "rtc_ds3231.h"
 
 static bool needs_redraw = true;
 static const char *TAG = "menu";
+
+rtc_time_t time;
+rtc_date_t date;
+
+extern ds3231_handle_t ds3231_handle;
+
 
 // ---------- Menu Structure ----------
 typedef struct menu {
@@ -172,8 +179,14 @@ void clock_render(void){
     char time_str[20];
     char date_str[20];
 
-    snprintf(time_str, sizeof(time_str), "12:45:30");
-    snprintf(date_str, sizeof(date_str), "26 Apr 2026");
+    ds3231_get_time(&ds3231_handle, &time);
+    ds3231_get_date(&ds3231_handle, &date);
+
+
+    ESP_LOGI(TAG, "%d:%d:%d %s %s", time.hours, time.minutes, time.seconds, time.hour_format == HOUR_FORMAT_12 ? "12" : "24", time.meridiem == AM ? "AM" : "PM");
+
+    snprintf(time_str, sizeof(time_str), "%02d:%02d:%02d", time.hours, time.minutes, time.seconds);
+    snprintf(date_str, sizeof(date_str), "%02d/%02d/%04d", date.day, date.month, date.year);
 
     display_clear();
 
