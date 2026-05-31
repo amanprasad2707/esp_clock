@@ -6,14 +6,8 @@
 #include "i2c_hal.h"
 #include "driver/i2c_master.h"
 #include "rtc_ds3231.h"
+#include "ui.h"
 
-
-
-typedef enum {
-    UI_STATE_CLOCK,
-    UI_STATE_MENU
-} ui_screen_t;
-static ui_screen_t current_screen = UI_STATE_CLOCK;
 
 ds3231_handle_t ds3231_handle;
 
@@ -52,6 +46,9 @@ static void ui_task(void *arg){
                     /* Render menu only if state changed */
                     menu_render();
                     break;
+
+                default:
+                    break;
             }
         } else {
             /* Timeout occurred (no input event). Periodic update for the clock. */
@@ -67,8 +64,6 @@ void app_main(void){
 
     ESP_ERROR_CHECK(i2c_hal_init());
     ESP_ERROR_CHECK(ds3231_init(i2c_hal_get_bus(), DS3231_I2C_ADDRESS, &ds3231_handle));
-
-    i2c_master_bus_handle_t bus = i2c_hal_get_bus();
 
     printf("I2C bus initialized\n");
 

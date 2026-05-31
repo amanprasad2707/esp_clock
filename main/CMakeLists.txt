@@ -4,6 +4,7 @@ idf_component_register(
         "ui/menu.c"
         "rotary_encoder/rotary_encoder.c"
         "display/display.c"
+        "ui/ui.c"
 
     INCLUDE_DIRS
         "."
