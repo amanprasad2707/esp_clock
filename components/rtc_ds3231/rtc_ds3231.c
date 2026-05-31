@@ -1,4 +1,4 @@
-#include "ds3231.h"
+#include "rtc_ds3231.h"
 #include "esp_log.h"
 #include <string.h>
 
