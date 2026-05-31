@@ -180,8 +180,15 @@ void clock_render(void){
     char date_str[20];
 
     ds3231_get_time(&ds3231_handle, &time);
-    ds3231_get_date(&ds3231_handle, &date);
 
+    /* Only redraw when the seconds change to avoid screen flicker and excessive I2C traffic */
+    static uint8_t last_second = 60;
+    if (time.seconds == last_second) {
+        return;
+    }
+    last_second = time.seconds;
+
+    ds3231_get_date(&ds3231_handle, &date);
 
     ESP_LOGI(TAG, "%d:%d:%d %s %s", time.hours, time.minutes, time.seconds, time.hour_format == HOUR_FORMAT_12 ? "12" : "24", time.meridiem == AM ? "AM" : "PM");
 
@@ -191,7 +198,7 @@ void clock_render(void){
     display_clear();
 
     // -------- BIG TIME --------
-    display_set_font(u8g2_font_logisoso24_tr);
+    display_set_font(u8g2_font_logisoso26_tf);
 
     // center horizontally (approx)
     display_draw_text(0, 40, time_str);

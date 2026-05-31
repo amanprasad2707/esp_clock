@@ -30,8 +30,8 @@ static void ui_task(void *arg){
     while (1) {
         ui_event_t event;
 
-        /* Wait indefinitely for next UI event (blocking call) */
-        if (xQueueReceive(event_queue, &event, portMAX_DELAY)) {
+        /* Wait up to 100ms for next UI event to allow periodic updates */
+        if (xQueueReceive(event_queue, &event, pdMS_TO_TICKS(100))) {
 
             switch(current_screen){
                 /* clock screen */
@@ -53,8 +53,11 @@ static void ui_task(void *arg){
                     menu_render();
                     break;
             }
-
-            
+        } else {
+            /* Timeout occurred (no input event). Periodic update for the clock. */
+            if (current_screen == UI_STATE_CLOCK) {
+                clock_render();
+            }
         }
     }
 }
