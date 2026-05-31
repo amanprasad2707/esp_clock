@@ -12,5 +12,5 @@ idf_component_register(
         "display"
 
     REQUIRES
-        u8g2 u8g2_esp32_hal driver esp_driver_spi esp_driver_i2c
+        u8g2 u8g2_esp32_hal driver esp_driver_spi esp_driver_i2c rtc_ds3231
     )
