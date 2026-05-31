@@ -178,6 +178,9 @@ void clock_render(void){
     // TODO: replace with RTC data
     char time_str[20];
     char date_str[20];
+    char sec_str[4];
+    float temp;
+    char temp_str[8];
 
     ds3231_get_time(&ds3231_handle, &time);
 
@@ -189,11 +192,14 @@ void clock_render(void){
     last_second = time.seconds;
 
     ds3231_get_date(&ds3231_handle, &date);
+    ds3231_get_temperature(&ds3231_handle, &temp);
 
     ESP_LOGI(TAG, "%d:%d:%d %s %s", time.hours, time.minutes, time.seconds, time.hour_format == HOUR_FORMAT_12 ? "12" : "24", time.meridiem == AM ? "AM" : "PM");
 
-    snprintf(time_str, sizeof(time_str), "%02d:%02d:%02d", time.hours, time.minutes, time.seconds);
+    snprintf(time_str, sizeof(time_str), "%02d:%02d", time.hours, time.minutes);
+    snprintf(sec_str, sizeof(sec_str), "%02d", time.seconds);
     snprintf(date_str, sizeof(date_str), "%02d/%02d/%04d", date.day, date.month, date.year);
+    snprintf(temp_str, sizeof(temp_str), "%d%cC", (int)temp, 176);
 
     display_clear();
 
@@ -201,11 +207,15 @@ void clock_render(void){
     display_set_font(u8g2_font_logisoso26_tf);
 
     // center horizontally (approx)
-    display_draw_text(0, 40, time_str);
+    display_draw_text(22, 40, time_str);
+    display_set_font(u8g2_font_6x13_tf);
+    display_draw_text(10, 25, time.meridiem == AM ? "AM" : "PM");
+    display_draw_text(102, 45, sec_str);
 
     // -------- DATE --------
-    display_set_font(u8g2_font_6x10_tf);
-    display_draw_text(20, 60, date_str);
+    display_set_font(u8g2_font_6x12_tf);
+    display_draw_text(22, 64, date_str);
+    display_draw_text(105, 64, temp_str);
 
     display_update();
 }
