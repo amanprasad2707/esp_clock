@@ -1,73 +1,45 @@
-#include "esp_idf_version.h"
 #include "freertos/FreeRTOS.h"
-#include "menu.h"
+#include "freertos/task.h"
+#include "esp_log.h"
+
 #include "rotary_encoder.h"
 #include "display.h"
+#include "ui_manager.h"
+#include "alarm_engine.h"
+
+#include "rtc_ds3231.h"
 #include "i2c_hal.h"
-#include "driver/i2c_master.h"
+#include "config.h"
 
+static const char *TAG = "main";
 
-typedef enum {
-    UI_STATE_CLOCK,
-    UI_STATE_MENU
-} ui_screen_t;
-static ui_screen_t current_screen = UI_STATE_CLOCK;
-
-
-static void ui_task(void *arg){
-    /* Queue that receives input events from the rotary encoder */
-    QueueHandle_t event_queue = rotary_encoder_get_queue();
-
-    menu_init();
-    clock_render();     // start with clock screen
-
-    while (1) {
-        ui_event_t event;
-
-        /* Wait indefinitely for next UI event (blocking call) */
-        if (xQueueReceive(event_queue, &event, portMAX_DELAY)) {
-
-            switch(current_screen){
-                /* clock screen */
-                case UI_STATE_CLOCK:
-                    /* any interaction, switch to menu */
-                    if (event == EVENT_ROTATE_CW || event == EVENT_ROTATE_CCW || event == EVENT_BUTTON_PRESS) {
-                        current_screen = UI_STATE_MENU;
-
-                        menu_render();   // draw menu immediately
-                    }
-                    break;
-
-                /* menu screen */
-                case UI_STATE_MENU:
-                    /* Update menu state based on input (rotate/button pressed) */
-                    menu_handle_event(event);
-
-                    /* Render menu only if state changed */
-                    menu_render();
-                    break;
-            }
-
-            
-        }
-    }
-}
-
+/* Globals shared across screens (declared extern in screen_*.c) */
+ds3231_handle_t ds3231_handle;
+rtc_time_t g_time;
+rtc_date_t g_date;
 
 void app_main(void){
-
+    /* Init I2C hal */
     ESP_ERROR_CHECK(i2c_hal_init());
 
-    i2c_master_bus_handle_t bus = i2c_hal_get_bus();
+    /* Init RTC */
+    ds3231_init(i2c_hal_get_bus(), RTC_I2C_ADDR, &ds3231_handle);
+    ESP_LOGI(TAG, "RTC OK");
 
-    printf("I2C bus initialized\n");
-
-
+    /* Init OLED */
     display_init();
-    display_clear();
+    ESP_LOGI(TAG, "Display OK");
 
-    rotary_encoder_init();
+    /* Init Encoder and returns event queue */
+    QueueHandle_t enc_q = rotary_encoder_init();
+    ESP_LOGI(TAG, "Rotary Encoder OK");
 
-    xTaskCreate(ui_task, "ui_task", 4096, NULL, 5, NULL);
+    /* Alarm engine (background task) */
+    alarm_engine_start();
+    ESP_LOGI(TAG, "Alarm engine OK");
+
+    /* UI manager (owns all screens) */
+    ui_manager_start(enc_q);
+    ESP_LOGI(TAG, "UI manager started");
 
 }
