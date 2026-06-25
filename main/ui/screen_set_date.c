@@ -155,9 +155,9 @@ void screen_set_date_tick(void){
 
     u8g2_t *u = display_get_handle();
 
-    if (s_field == DF_DAY)   u8g2_DrawHLine(u, 10, 37, 18);
-    if (s_field == DF_MONTH) u8g2_DrawHLine(u, 32, 37, 27);
-    if (s_field == DF_YEAR)  u8g2_DrawHLine(u, 63, 37, 36);
+    if (s_field == DF_DAY)   u8g2_DrawHLine(u, 9, 37, 18);
+    if (s_field == DF_MONTH) u8g2_DrawHLine(u, 37, 37, 27);
+    if (s_field == DF_YEAR)  u8g2_DrawHLine(u, 72, 37, 36);
 
     /* BACK button */
     if (s_field == DF_BACK) {
