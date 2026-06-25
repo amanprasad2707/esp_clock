@@ -161,23 +161,25 @@ void screen_set_date_tick(void){
 
     /* BACK button */
     if (s_field == DF_BACK) {
-        u8g2_DrawBox(u, 2, 52, 38, 12);
+        display_set_font(u8g2_font_6x10_tf);
+        u8g2_DrawBox(u, 2, 52, 31, 12);
         u8g2_SetDrawColor(u, 0);
         display_draw_text(6, 62, "BACK");
         u8g2_SetDrawColor(u, 1);
     } else {
-        display_draw_frame(u8g2_GetDisplayWidth(u) - 126, 52, 38, 12);
+        display_set_font(u8g2_font_6x10_tf);
+        display_draw_frame(u8g2_GetDisplayWidth(u) - 126, 52, 31, 12);
         display_draw_text(6, 62, "BACK");
     }
 
     /* SAVE button */
     if (s_field == DF_SAVE) {
-        u8g2_DrawBox(u, 88, 52, 38, 12);
+        u8g2_DrawBox(u, 88, 52, 31, 12);
         u8g2_SetDrawColor(u, 0);
         display_draw_text(92, 62, "SAVE");
         u8g2_SetDrawColor(u, 1);
     } else {
-        display_draw_frame(u8g2_GetDisplayWidth(u) - 40, 52, 38, 12);
+        display_draw_frame(u8g2_GetDisplayWidth(u) - 40, 52, 31, 12);
         display_draw_text(92, 62, "SAVE");
     }
 
