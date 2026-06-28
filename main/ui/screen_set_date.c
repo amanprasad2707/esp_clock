@@ -145,19 +145,19 @@ void screen_set_date_tick(void){
 
     display_clear();
     display_set_font(u8g2_font_6x10_tf);
-    display_draw_text(2, 10, "SET DATE");
+    display_draw_text(40, 10, "SET DATE");
     display_draw_hline(0, 12, 128);
 
     char preview[20];
     snprintf(preview, sizeof(preview), "%02d %s %04d", s_day, k_month_abbr[s_month], s_year);
     display_set_font(u8g2_font_9x15B_tf);
-    display_draw_text(10, 35, preview);
+    display_draw_text(10, 30, preview);
 
     u8g2_t *u = display_get_handle();
 
-    if (s_field == DF_DAY)   u8g2_DrawHLine(u, 9, 37, 18);
-    if (s_field == DF_MONTH) u8g2_DrawHLine(u, 37, 37, 27);
-    if (s_field == DF_YEAR)  u8g2_DrawHLine(u, 72, 37, 36);
+    if (s_field == DF_DAY)   u8g2_DrawHLine(u, 9, 32, 18);
+    if (s_field == DF_MONTH) u8g2_DrawHLine(u, 37, 32, 27);
+    if (s_field == DF_YEAR)  u8g2_DrawHLine(u, 72, 32, 36);
 
     /* BACK button */
     if (s_field == DF_BACK) {
