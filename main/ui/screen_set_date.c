@@ -21,13 +21,11 @@ static date_field_t s_field;
 static int  s_day, s_month, s_year, s_weekday;
 static bool s_dirty;
 
-static const uint8_t k_days_in_month[13] = {
-    0, 31,28,31,30,31,30,31,31,30,31,30,31
-};
+static const uint8_t k_days_in_month[13] = {0, 31,28,31,30,31,30,31,31,30,31,30,31};
 
-static const char *k_weekday_abbr[] = {
-    "", "Sun","Mon","Tue","Wed","Thu","Fri","Sat"
-};
+static const char *k_weekday_abbr[] = {"","Sun","Mon","Tue","Wed","Thu","Fri","Sat"};
+
+static const char *k_month_abbr[] = {"", "Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"};
 
 static bool is_leap(int y) { return (y%4==0 && y%100!=0) || (y%400==0); }
 static int  max_day(void)  {
@@ -147,10 +145,6 @@ void screen_set_date_event(encoder_event_t evt){
     s_dirty = true;
 }
 
-static const char *k_month_abbr[] = {
-    "", "Jan","Feb","Mar","Apr","May","Jun",
-    "Jul","Aug","Sep","Oct","Nov","Dec"
-};
 
 void screen_set_date_tick(void){
     if (!s_dirty) return;
