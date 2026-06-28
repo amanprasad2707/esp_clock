@@ -12,18 +12,23 @@ typedef enum{
     DF_DAY = 0,
     DF_MONTH,
     DF_YEAR,
+    DF_WEEKDAY,
     DF_BACK,
     DF_SAVE,
-    DF_N
 }date_field_t;
 
 static date_field_t s_field;
-static int  s_day, s_month, s_year;
+static int  s_day, s_month, s_year, s_weekday;
 static bool s_dirty;
 
 static const uint8_t k_days_in_month[13] = {
     0, 31,28,31,30,31,30,31,31,30,31,30,31
 };
+
+static const char *k_weekday_abbr[] = {
+    "", "Sun","Mon","Tue","Wed","Thu","Fri","Sat"
+};
+
 static bool is_leap(int y) { return (y%4==0 && y%100!=0) || (y%400==0); }
 static int  max_day(void)  {
     int d = k_days_in_month[s_month];
@@ -33,9 +38,10 @@ static int  max_day(void)  {
 
 void screen_set_date_enter(void){
     ds3231_get_date(&ds3231_handle, &g_date);
-    s_day   = g_date.date;
-    s_month = g_date.month;
-    s_year  = g_date.year;
+    s_day = (g_date.date  >= 1 && g_date.date  <= 31) ? g_date.date  : 1;
+    s_month = (g_date.month >= 1 && g_date.month <= 12) ? g_date.month : 1;
+    s_year = (g_date.year  >= 2000) ? g_date.year  : 2025;
+    s_weekday = (g_date.day >= SUNDAY && g_date.day <= SATURDAY) ? g_date.day : SUNDAY;
     s_field = DF_DAY;
     s_dirty = true;
 }
@@ -53,6 +59,9 @@ static void inc_df(void){
             s_year++;
             if (s_day > max_day()) s_day = max_day();
             break;
+        case DF_WEEKDAY:
+        s_weekday = (s_weekday % 7) + 1;
+        break;
         default:
             break;
     }
@@ -71,6 +80,9 @@ static void dec_df(void){
             s_year = s_year > 2000 ? s_year - 1 : s_year;
             if (s_day > max_day()) s_day = max_day();
             break;
+        case DF_WEEKDAY:
+        s_weekday = s_weekday <= 1 ? 7 : s_weekday - 1;
+        break;
         default:
             break;
     }
@@ -80,6 +92,7 @@ static void save_and_exit(void){
     g_date.date  = s_day;
     g_date.month = s_month;
     g_date.year  = s_year;
+    g_date.day = s_weekday;
     ds3231_set_date(&ds3231_handle, &g_date);
     ui_manager_goto(SCREEN_CLOCK);
 }
@@ -147,6 +160,7 @@ void screen_set_date_tick(void){
     display_set_font(u8g2_font_6x10_tf);
     display_draw_text(40, 10, "SET DATE");
     display_draw_hline(0, 12, 128);
+    
 
     char preview[20];
     snprintf(preview, sizeof(preview), "%02d %s %04d", s_day, k_month_abbr[s_month], s_year);
@@ -158,6 +172,10 @@ void screen_set_date_tick(void){
     if (s_field == DF_DAY)   u8g2_DrawHLine(u, 9, 32, 18);
     if (s_field == DF_MONTH) u8g2_DrawHLine(u, 37, 32, 27);
     if (s_field == DF_YEAR)  u8g2_DrawHLine(u, 72, 32, 36);
+
+    display_set_font(u8g2_font_6x10_tf);
+    display_draw_text(45, 46, k_weekday_abbr[s_weekday]);
+    if (s_field == DF_WEEKDAY) u8g2_DrawHLine(u, 45, 48, 18);
 
     /* BACK button */
     if (s_field == DF_BACK) {
