@@ -9,15 +9,15 @@ extern ds3231_handle_t ds3231_handle;
 extern rtc_date_t g_date;
 
 typedef enum{
-    DF_DATE = 0,
-    DF_MONTH,
-    DF_YEAR,
-    DF_WEEKDAY,
-    DF_BACK,
-    DF_SAVE,
-}date_field_t;
+    DATE_UI_DATE,
+    DATE_UI_MONTH,
+    DATE_UI_YEAR,
+    DATE_UI_WEEKDAY,
+    DATE_UI_BACK,
+    DATE_UI_SAVE,
+}date_ui_focus_t;
 
-static date_field_t s_date_field;
+static date_ui_focus_t s_focus;
 static int  s_date, s_month, s_year, s_weekday;
 static bool s_dirty;
 
@@ -45,31 +45,31 @@ void screen_set_date_enter(void){
     s_month = (g_date.month >= 1 && g_date.month <= 12) ? g_date.month : 1;
     s_year = (g_date.year  >= 2000) ? g_date.year  : 2025;
     s_weekday = (g_date.day >= SUNDAY && g_date.day <= SATURDAY) ? g_date.day : SUNDAY;
-    s_date_field = DF_DATE;
+    s_focus = DATE_UI_DATE;
     s_dirty = true;
 }
 
 static void inc_df(void){
-    switch(s_date_field){
-        case DF_DATE:
+    switch(s_focus){
+        case DATE_UI_DATE:
             s_date = (s_date % max_day()) + 1;
             break;
 
-        case DF_MONTH:
+        case DATE_UI_MONTH:
             s_month = (s_month % 12) + 1;   // prevent invalid dates after month change
             if (s_date > max_day()){
                 s_date = max_day();
             }
             break;
 
-        case DF_YEAR:
+        case DATE_UI_YEAR:
             s_year++;
             if (s_date > max_day()){    // prevent invalid dates after year change
                 s_date = max_day();
             }
             break;
 
-        case DF_WEEKDAY:
+        case DATE_UI_WEEKDAY:
         s_weekday = (s_weekday % 7) + 1;
         break;
 
@@ -79,26 +79,26 @@ static void inc_df(void){
 }
 
 static void dec_df(void){
-    switch(s_date_field){
-        case DF_DATE:
+    switch(s_focus){
+        case DATE_UI_DATE:
             s_date = s_date <= 1 ? max_day() : s_date - 1;
             break;
 
-        case DF_MONTH:
+        case DATE_UI_MONTH:
             s_month = s_month <= 1 ? 12 : s_month - 1;
             if (s_date > max_day()){
                 s_date = max_day();
             }
             break;
 
-        case DF_YEAR:
+        case DATE_UI_YEAR:
             s_year = s_year > 2000 ? s_year - 1 : s_year;
             if(s_date > max_day()){
                 s_date = max_day();
             }
             break;
 
-        case DF_WEEKDAY:
+        case DATE_UI_WEEKDAY:
         s_weekday = s_weekday <= 1 ? 7 : s_weekday - 1;
         break;
 
@@ -123,13 +123,13 @@ static void discard_and_exit(void){
 void screen_set_date_event(encoder_event_t evt){
     switch(evt){
         case ENC_EVT_CW:
-            if (s_date_field == DF_BACK){
+            if (s_focus == DATE_UI_BACK){
                 /* rotate CW on BACK -> go to SAVE */
-                s_date_field = DF_SAVE;
+                s_focus = DATE_UI_SAVE;
             }
-            else if(s_date_field == DF_SAVE){
+            else if(s_focus == DATE_UI_SAVE){
                 /* rotate CW on SAVE -> go back to DAY to re-edit */
-                s_date_field = DF_DATE;
+                s_focus = DATE_UI_DATE;
             }
             else{
                 inc_df();
@@ -137,13 +137,13 @@ void screen_set_date_event(encoder_event_t evt){
             break;
 
         case ENC_EVT_CCW:
-            if(s_date_field == DF_SAVE){
+            if(s_focus == DATE_UI_SAVE){
                 /* rotate CCW on SAVE -> go to BACK */
-                s_date_field = DF_BACK;
+                s_focus = DATE_UI_BACK;
             }
-            else if(s_date_field == DF_BACK){
+            else if(s_focus == DATE_UI_BACK){
                 /* rotate CCW on BACK -> go back to DAY to re-edit */
-                s_date_field = DF_DATE;
+                s_focus = DATE_UI_DATE;
             }
             else{
                 dec_df();
@@ -151,16 +151,16 @@ void screen_set_date_event(encoder_event_t evt){
             break;
 
         case ENC_EVT_SHORT_PRESS:
-            if(s_date_field == DF_SAVE){
+            if(s_focus == DATE_UI_SAVE){
                 save_and_exit();
                 return;
             }
-            else if(s_date_field == DF_BACK){
+            else if(s_focus == DATE_UI_BACK){
                 discard_and_exit();
                 return;
             }
             else {
-                s_date_field = (date_field_t)(s_date_field + 1);
+                s_focus = (date_ui_focus_t)(s_focus + 1);
             }
             break;
 
@@ -191,22 +191,22 @@ void screen_set_date_tick(void){
 
     u8g2_t *u = display_get_handle();
 
-    if(s_date_field == DF_DATE){
+    if(s_focus == DATE_UI_DATE){
         u8g2_DrawHLine(u, 9, 32, 18);
     }
-    if(s_date_field == DF_MONTH){
+    if(s_focus == DATE_UI_MONTH){
         u8g2_DrawHLine(u, 37, 32, 27);
     }
-    if(s_date_field == DF_YEAR){
+    if(s_focus == DATE_UI_YEAR){
         u8g2_DrawHLine(u, 72, 32, 36);
     }
 
     display_set_font(u8g2_font_8x13B_mf);
     display_draw_text(45, 46, k_weekday_abbr[s_weekday]);
-    if (s_date_field == DF_WEEKDAY) u8g2_DrawHLine(u, 47, 48, 21);
+    if (s_focus == DATE_UI_WEEKDAY) u8g2_DrawHLine(u, 47, 48, 21);
 
     /* BACK button */
-    if(s_date_field == DF_BACK){
+    if(s_focus == DATE_UI_BACK){
         display_set_font(u8g2_font_6x10_tf);
         u8g2_DrawBox(u, 2, 52, 31, 12);
         u8g2_SetDrawColor(u, 0);
@@ -220,7 +220,7 @@ void screen_set_date_tick(void){
     }
 
     /* SAVE button */
-    if(s_date_field == DF_SAVE){
+    if(s_focus == DATE_UI_SAVE){
         u8g2_DrawBox(u, 88, 52, 31, 12);
         u8g2_SetDrawColor(u, 0);
         display_draw_text(92, 62, "SAVE");
