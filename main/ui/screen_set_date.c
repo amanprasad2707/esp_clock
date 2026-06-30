@@ -167,9 +167,9 @@ void screen_set_date_tick(void){
     if (s_field == DF_MONTH) u8g2_DrawHLine(u, 37, 32, 27);
     if (s_field == DF_YEAR)  u8g2_DrawHLine(u, 72, 32, 36);
 
-    display_set_font(u8g2_font_6x10_tf);
+    display_set_font(u8g2_font_8x13B_mf);
     display_draw_text(45, 46, k_weekday_abbr[s_weekday]);
-    if (s_field == DF_WEEKDAY) u8g2_DrawHLine(u, 45, 48, 18);
+    if (s_field == DF_WEEKDAY) u8g2_DrawHLine(u, 47, 48, 21);
 
     /* BACK button */
     if (s_field == DF_BACK) {
