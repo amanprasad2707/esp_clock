@@ -189,45 +189,45 @@ void screen_set_date_tick(void){
     display_set_font(u8g2_font_9x15B_tf);
     display_draw_text(10, 30, preview);
 
-    u8g2_t *u = display_get_handle();
-
     if(s_focus == DATE_UI_DATE){
-        u8g2_DrawHLine(u, 9, 32, 18);
+        display_draw_hline(9, 32, 18);
     }
     if(s_focus == DATE_UI_MONTH){
-        u8g2_DrawHLine(u, 37, 32, 27);
+        display_draw_hline(37, 32, 27);
     }
     if(s_focus == DATE_UI_YEAR){
-        u8g2_DrawHLine(u, 72, 32, 36);
+        display_draw_hline(72, 32, 36);
     }
 
     display_set_font(u8g2_font_8x13B_mf);
     display_draw_text(45, 46, k_weekday_abbr[s_weekday]);
-    if (s_focus == DATE_UI_WEEKDAY) u8g2_DrawHLine(u, 47, 48, 21);
+    if(s_focus == DATE_UI_WEEKDAY){
+        display_draw_hline(47, 48, 21);
+    }
 
     /* BACK button */
     if(s_focus == DATE_UI_BACK){
         display_set_font(u8g2_font_6x10_tf);
-        u8g2_DrawBox(u, 2, 52, 31, 12);
-        u8g2_SetDrawColor(u, 0);
+        display_draw_box(2, 52, 31, 12);
+        display_set_color(0);
         display_draw_text(6, 62, "BACK");
-        u8g2_SetDrawColor(u, 1);
+        display_set_color(1);
     }
     else{
         display_set_font(u8g2_font_6x10_tf);
-        display_draw_frame(u8g2_GetDisplayWidth(u) - 126, 52, 31, 12);
+        display_draw_frame(display_get_display_width() - 126, 52, 31, 12);
         display_draw_text(6, 62, "BACK");
     }
 
     /* SAVE button */
     if(s_focus == DATE_UI_SAVE){
-        u8g2_DrawBox(u, 88, 52, 31, 12);
-        u8g2_SetDrawColor(u, 0);
+        display_draw_box(88, 52, 31, 12);
+        display_set_color(0);
         display_draw_text(92, 62, "SAVE");
-        u8g2_SetDrawColor(u, 1);
+        display_set_color(1);
     }
     else{
-        display_draw_frame(u8g2_GetDisplayWidth(u) - 40, 52, 31, 12);
+        display_draw_frame(display_get_display_width() - 40, 52, 31, 12);
         display_draw_text(92, 62, "SAVE");
     }
 
