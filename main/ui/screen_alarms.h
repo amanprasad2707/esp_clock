@@ -5,10 +5,10 @@
 
 #define N_ALARMS 2
 
-typedef struct {
+typedef struct{
     uint8_t hours;
     uint8_t minutes;
-    bool    enabled;
+    bool enabled;
 } alarm_cfg_t;
 
 /* Shared alarm config — read by alarm_engine */
