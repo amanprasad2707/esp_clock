@@ -511,3 +511,69 @@ esp_err_t ds3231_clear_alarm2_flag(ds3231_handle_t *handle){
     reg &= ~(1 << DS3231_STATUS_A2F);
     return reg_write(handle, DS3231_ADDR_STATUS, reg);
 }
+
+esp_err_t ds3231_get_alarm1(ds3231_handle_t *handle, ds3231_alarm1_t *alarm){
+    if (!handle || !alarm) return ESP_ERR_INVALID_ARG;
+
+    uint8_t sc, mn, hr, dd;
+    esp_err_t ret;
+
+    ret = reg_read(handle, DS3231_ADDR_ALM1_SEC,     &sc); if (ret != ESP_OK) return ret;
+    ret = reg_read(handle, DS3231_ADDR_ALM1_MIN,     &mn); if (ret != ESP_OK) return ret;
+    ret = reg_read(handle, DS3231_ADDR_ALM1_HRS,     &hr); if (ret != ESP_OK) return ret;
+    ret = reg_read(handle, DS3231_ADDR_ALM1_DAYDATE, &dd); if (ret != ESP_OK) return ret;
+
+    /* Decode time */
+    alarm->time.seconds = bcd2bin(sc & 0x7F);
+    alarm->time.minutes = bcd2bin(mn & 0x7F);
+
+    alarm->time.hour_format = (hr & (1 << 6)) ? HOUR_FORMAT_12 : HOUR_FORMAT_24;
+    if (alarm->time.hour_format == HOUR_FORMAT_12) {
+        alarm->time.meridiem = (hr & (1 << 5)) ? PM : AM;
+        alarm->time.hours    = bcd2bin(hr & 0x1F);
+    } else {
+        alarm->time.meridiem = AM;
+        alarm->time.hours    = bcd2bin(hr & 0x3F);
+    }
+
+    /* Reconstruct mode bits: A1M1..A1M4 + DY/DT */
+    uint8_t m1 = (sc & (1 << DS3231_AXMY)) ? 1 : 0;
+    uint8_t m2 = (mn & (1 << DS3231_AXMY)) ? 1 : 0;
+    uint8_t m3 = (hr & (1 << DS3231_AXMY)) ? 1 : 0;
+    uint8_t m4 = (dd & (1 << DS3231_AXMY)) ? 1 : 0;
+    uint8_t dy = (dd & (1 << DS3231_DYDT)) ? 1 : 0;
+
+    alarm->mode = (ds3231_alarm1_mode_t)(m1 | (m2 << 1) | (m3 << 2) | (m4 << 3) | (dy << 4));
+    return ESP_OK;
+}
+
+esp_err_t ds3231_get_alarm2(ds3231_handle_t *handle, ds3231_alarm2_t *alarm){
+    if (!handle || !alarm) return ESP_ERR_INVALID_ARG;
+
+    uint8_t mn, hr, dd;
+    esp_err_t ret;
+
+    ret = reg_read(handle, DS3231_ADDR_ALM2_MIN,     &mn); if (ret != ESP_OK) return ret;
+    ret = reg_read(handle, DS3231_ADDR_ALM2_HRS,     &hr); if (ret != ESP_OK) return ret;
+    ret = reg_read(handle, DS3231_ADDR_ALM2_DAYDATE, &dd); if (ret != ESP_OK) return ret;
+
+    alarm->time.seconds = 0;
+    alarm->time.minutes = bcd2bin(mn & 0x7F);
+
+    alarm->time.hour_format = (hr & (1 << 6)) ? HOUR_FORMAT_12 : HOUR_FORMAT_24;
+    if (alarm->time.hour_format == HOUR_FORMAT_12) {
+        alarm->time.meridiem = (hr & (1 << 5)) ? PM : AM;
+        alarm->time.hours    = bcd2bin(hr & 0x1F);
+    } else {
+        alarm->time.meridiem = AM;
+        alarm->time.hours    = bcd2bin(hr & 0x3F);
+    }
+
+    uint8_t m2 = (mn & (1 << DS3231_AXMY)) ? 1 : 0;
+    uint8_t m3 = (hr & (1 << DS3231_AXMY)) ? 1 : 0;
+    uint8_t m4 = (dd & (1 << DS3231_AXMY)) ? 1 : 0;
+    uint8_t dy = (dd & (1 << DS3231_DYDT)) ? 1 : 0;
+
+    alarm->mode = (ds3231_alarm2_mode_t)(m2 | (m3 << 1) | (m4 << 2) | (dy << 3));
+    return ESP_OK;
+}

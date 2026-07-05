@@ -142,6 +142,18 @@ typedef struct {
     rtc_meridiem_t    meridiem;   /* ignored in HOUR_FORMAT_24 */
 } rtc_time_t;
 
+
+typedef struct {
+    rtc_time_t time;           /* H:M:S, format, meridiem */
+    ds3231_alarm1_mode_t mode; /* hardware match mode */
+} ds3231_alarm1_t;
+
+typedef struct {
+    rtc_time_t time;
+    ds3231_alarm2_mode_t mode;
+} ds3231_alarm2_t;
+
+
 /**
  * @brief Opaque driver handle.
  *
@@ -248,6 +260,8 @@ esp_err_t ds3231_set_alarm2_mode(ds3231_handle_t *handle, ds3231_alarm2_mode_t m
 esp_err_t ds3231_enable_alarm2(ds3231_handle_t *handle, ds3231_state_t enable);
 esp_err_t ds3231_is_alarm2_triggered(ds3231_handle_t *handle, bool *triggered);
 esp_err_t ds3231_clear_alarm2_flag(ds3231_handle_t *handle);
+esp_err_t ds3231_get_alarm1(ds3231_handle_t *handle, ds3231_alarm1_t *alarm);
+esp_err_t ds3231_get_alarm2(ds3231_handle_t *handle, ds3231_alarm2_t *alarm);
 
 #ifdef __cplusplus
 }
