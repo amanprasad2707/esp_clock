@@ -49,7 +49,7 @@ void screen_set_date_enter(void){
     s_dirty = true;
 }
 
-static void inc_df(void){
+static void increment_selected_item(void){
     switch(s_focus){
         case DATE_UI_DATE:
             s_date = (s_date % max_day()) + 1;
@@ -78,7 +78,7 @@ static void inc_df(void){
     }
 }
 
-static void dec_df(void){
+static void decrement_selected_item(void){
     switch(s_focus){
         case DATE_UI_DATE:
             s_date = s_date <= 1 ? max_day() : s_date - 1;
@@ -132,7 +132,7 @@ void screen_set_date_event(encoder_event_t evt){
                 s_focus = DATE_UI_DATE;
             }
             else{
-                inc_df();
+                increment_selected_item();
             }
             break;
 
@@ -146,7 +146,7 @@ void screen_set_date_event(encoder_event_t evt){
                 s_focus = DATE_UI_DATE;
             }
             else{
-                dec_df();
+                decrement_selected_item();
             }
             break;
 
