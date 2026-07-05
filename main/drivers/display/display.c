@@ -5,6 +5,7 @@
 #include "esp_log.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include <stdint.h>
 
 
 
@@ -43,6 +44,10 @@ void display_update(void){
     u8g2_SendBuffer(&u8g2);
 }
 
+void display_set_color(uint8_t color){
+    u8g2_SetDrawColor(&u8g2, color);
+}
+
 void display_draw_text(int x, int y, const char *text){
     u8g2_DrawStr(&u8g2, x, y, text);
 }
@@ -67,6 +72,9 @@ u8g2_t *display_get_handle(void){
     return &u8g2;
 }
 
+uint16_t display_get_display_width(void){
+    return u8g2_GetDisplayWidth(&u8g2);
+}
 
 
 

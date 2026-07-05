@@ -11,6 +11,9 @@ extern ds3231_handle_t ds3231_handle;
 extern rtc_time_t   g_time;
 extern rtc_date_t   g_date;
 
+static const char *k_month_abbr[] = {"", "Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"};
+static const char *k_weekday_abbr[] = {"", "Sun","Mon","Tue","Wed","Thu","Fri","Sat"};
+
 void screen_clock_enter(void) { /* nothing to init */ }
 
 void screen_clock_event(encoder_event_t evt){
@@ -41,7 +44,7 @@ void screen_clock_tick(void){
 
     snprintf(time_str, sizeof(time_str), "%02d:%02d", g_time.hours, g_time.minutes);
     snprintf(sec_str,  sizeof(sec_str),  "%02d", g_time.seconds);
-    snprintf(date_str, sizeof(date_str), "%02d/%02d/%04d", g_date.date, g_date.month, g_date.year);
+    snprintf(date_str, sizeof(date_str), "%s, %02d %s", k_weekday_abbr[g_date.day], g_date.date, k_month_abbr[g_date.month]);
     snprintf(temp_str, sizeof(temp_str), "%d%cC", (int)temp, 176);
 
     display_clear();
@@ -54,7 +57,7 @@ void screen_clock_tick(void){
     display_draw_text(102, 45, sec_str);
 
     display_set_font(u8g2_font_6x12_tf);
-    display_draw_text(22, 64,  date_str);
+    display_draw_text(28, 50,  date_str);
     display_draw_text(105, 64, temp_str);
 
     display_update();
