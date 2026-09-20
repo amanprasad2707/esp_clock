@@ -68,6 +68,10 @@ void display_draw_frame(int x, int y, int w, int h){
     u8g2_DrawFrame(&u8g2, x, y, w, h);
 }
 
+void display_bitmap(int x, int y, int w, int h, const uint8_t *bitmap){
+    u8g2_DrawXBM(&u8g2, x, y, w, h, bitmap);
+}
+
 u8g2_t *display_get_handle(void){
     return &u8g2;
 }

@@ -7,14 +7,8 @@
 #include <string.h>
 
 
-typedef enum{
-    SW_IDLE = 0,
-    SW_RUN,
-    SW_PAUSED,
-    SW_RESET
-}sw_state_t;
 
-static sw_state_t s_state;
+sw_state_t s_sw_state;
 static int64_t s_start_us;       /* esp_timer when last started */
 static int64_t s_elapsed_us;     /* accumulated elapsed before last pause */
 
@@ -23,7 +17,7 @@ static bool s_dirty;
 
 /* ---- helpers ---- */
 static int64_t current_elapsed(void){
-    if (s_state == SW_RUN){
+    if (s_sw_state == SW_RUN){
         return s_elapsed_us + (esp_timer_get_time() - s_start_us);
     }
 
@@ -48,22 +42,22 @@ void screen_stopwatch_enter(void){
 void screen_stopwatch_event(encoder_event_t evt){
     switch (evt) {
         case ENC_EVT_SHORT_PRESS:
-            if (s_state == SW_IDLE || s_state == SW_PAUSED) {
+            if (s_sw_state == SW_IDLE || s_sw_state == SW_PAUSED) {
                 /* Start / resume */
                 s_start_us = esp_timer_get_time();
-                s_state = SW_RUN;
+                s_sw_state = SW_RUN;
             }
             
-            else if(s_state == SW_RUN){
+            else if(s_sw_state == SW_RUN){
                 /* Pause */
                 s_elapsed_us = current_elapsed();
-                s_state = SW_PAUSED;
+                s_sw_state = SW_PAUSED;
             }
 
-            else if(s_state == SW_RESET){
+            else if(s_sw_state == SW_RESET){
                 /* Reset */
                 s_elapsed_us = 0;
-                s_state = SW_IDLE;
+                s_sw_state = SW_IDLE;
             }
             break;
 
@@ -73,8 +67,8 @@ void screen_stopwatch_event(encoder_event_t evt){
 
         case ENC_EVT_CW:
         case ENC_EVT_CCW:
-            if(s_state == SW_PAUSED || s_state == SW_RESET){
-                s_state = (s_state == SW_PAUSED) ? SW_RESET : SW_PAUSED;
+            if(s_sw_state == SW_PAUSED || s_sw_state == SW_RESET){
+                s_sw_state = (s_sw_state == SW_PAUSED) ? SW_RESET : SW_PAUSED;
             }
             break;
     }
@@ -83,7 +77,7 @@ void screen_stopwatch_event(encoder_event_t evt){
 
 /* ---- tick ---- */
 void screen_stopwatch_tick(void){
-    if (s_state == SW_RUN){
+    if (s_sw_state == SW_RUN){
         s_dirty = true;   /* live update */
     }
 
@@ -109,8 +103,8 @@ void screen_stopwatch_tick(void){
     display_draw_text(4, 42, buf);
     
     display_set_font(u8g2_font_6x10_tf);
-    
-    if(s_state == SW_PAUSED){
+
+    if(s_sw_state == SW_PAUSED){
         display_set_color(1);
         display_draw_box(10, 50, 45, 13);
         display_set_color(0);
@@ -119,7 +113,7 @@ void screen_stopwatch_tick(void){
         display_draw_text(84, 60, "RESET");
     }
 
-    else if(s_state == SW_RESET){
+    else if(s_sw_state == SW_RESET){
         display_draw_text(14, 60, "RESUME");
         display_set_color(1);
         display_draw_box(80, 50, 40, 13);
