@@ -10,7 +10,8 @@
 typedef enum{
     SW_IDLE = 0,
     SW_RUN,
-    SW_PAUSED
+    SW_PAUSED,
+    SW_RESET
 }sw_state_t;
 
 static sw_state_t s_state;
@@ -58,6 +59,12 @@ void screen_stopwatch_event(encoder_event_t evt){
                 s_elapsed_us = current_elapsed();
                 s_state = SW_PAUSED;
             }
+
+            else if(s_state == SW_RESET){
+                /* Reset */
+                s_elapsed_us = 0;
+                s_state = SW_IDLE;
+            }
             break;
 
         case ENC_EVT_LONG_PRESS:
@@ -66,7 +73,10 @@ void screen_stopwatch_event(encoder_event_t evt){
 
         case ENC_EVT_CW:
         case ENC_EVT_CCW:
-        break;
+            if(s_state == SW_PAUSED || s_state == SW_RESET){
+                s_state = (s_state == SW_PAUSED) ? SW_RESET : SW_PAUSED;
+            }
+            break;
     }
     s_dirty = true;
 }
@@ -97,6 +107,26 @@ void screen_stopwatch_tick(void){
     snprintf(buf, sizeof(buf), "%02d:%02d.%02d", em, es, ecs);
     display_set_font(u8g2_font_logisoso26_tf);
     display_draw_text(4, 42, buf);
+    
+    display_set_font(u8g2_font_6x10_tf);
+    
+    if(s_state == SW_PAUSED){
+        display_set_color(1);
+        display_draw_box(10, 50, 45, 13);
+        display_set_color(0);
+        display_draw_text(14, 60, "RESUME");
+        display_set_color(1);
+        display_draw_text(84, 60, "RESET");
+    }
+
+    else if(s_state == SW_RESET){
+        display_draw_text(14, 60, "RESUME");
+        display_set_color(1);
+        display_draw_box(80, 50, 40, 13);
+        display_set_color(0);
+        display_draw_text(84, 60, "RESET");
+        display_set_color(1);
+    }
 
     display_update();
 }
