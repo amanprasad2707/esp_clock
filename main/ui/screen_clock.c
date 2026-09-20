@@ -57,7 +57,7 @@ void screen_clock_tick(void){
     display_draw_text(102, 45, sec_str);
 
     display_set_font(u8g2_font_6x12_tf);
-    display_draw_text(28, 50,  date_str);
+    display_draw_text(28, 64,  date_str);
     display_draw_text(105, 64, temp_str);
 
     display_update();
