@@ -14,13 +14,24 @@
  *   TM_PAUSE – paused mid-run
  *   TM_DONE  – reached zero, buzzing
  */
-typedef enum { TM_SET = 0, TM_RUN, TM_PAUSE, TM_DONE } tm_state_t;
+typedef enum {
+    TM_SET = 0,
+    TM_RUN, 
+    TM_PAUSE,
+    TM_DONE
+} tm_state_t;
 
 /* Which field is active during TM_SET */
-typedef enum { TF_HOURS = 0, TF_MINUTES, TF_SECONDS, TF_N } tm_field_t;
+typedef enum {
+    TM_HOURS = 0,
+    TM_MINUTES,
+    TM_SECONDS,
+    TM_START,
+    TM_RESET,
+} tm_field_t;
 
-static tm_state_t s_state;
-static tm_field_t s_set_field;
+static tm_state_t s_tm_state;
+static tm_field_t s_selected_field;
 
 /* Set values (H/M/S chosen by user) */
 static int s_set_h, s_set_m, s_set_s;
@@ -46,88 +57,147 @@ static void remain_to_hms(int64_t us, int *h, int *m, int *s){
 
 /* ---- enter ---- */
 void screen_timer_enter(void){
-    s_state     = TM_SET;
-    s_set_field = TF_HOURS;
+    s_tm_state = TM_SET;
+    s_selected_field = TM_HOURS;
     s_set_h = 0; s_set_m = 5; s_set_s = 0;   /* default 5 minutes */
-    s_dirty     = true;
+    s_dirty = true;
 }
 
 /* ---- event ---- */
 void screen_timer_event(encoder_event_t evt){
-    switch (s_state) {
+    switch (s_tm_state) {
 
-        /* ---- SET mode: rotate changes field value, press advances field ---- */
+        /* SET mode: rotate changes field value, press advances field */
         case TM_SET:
             if (evt == ENC_EVT_CW || evt == ENC_EVT_CCW) {
                 int dir = (evt == ENC_EVT_CW) ? 1 : -1;
-                switch (s_set_field) {
-                    case TF_HOURS:
-                        s_set_h = (s_set_h + dir + 24) % 24; break;
-                    case TF_MINUTES:
-                        s_set_m = (s_set_m + dir + 60) % 60; break;
-                    case TF_SECONDS:
-                        s_set_s = (s_set_s + dir + 60) % 60; break;
-                    default: break;
+
+                switch (s_selected_field) {
+                    case TM_HOURS:
+                        s_set_h = (s_set_h + dir + 24) % 24;
+                        break;
+
+                    case TM_MINUTES:
+                        s_set_m = (s_set_m + dir + 60) % 60;
+                        break;
+
+                    case TM_SECONDS:
+                        s_set_s = (s_set_s + dir + 60) % 60;
+                        break;
+
+                    case TM_START:
+                        s_selected_field = (dir == 1) ? TM_RESET : TM_HOURS;
+                        break;
+
+                    case TM_RESET:
+                        s_selected_field = (dir == -1) ? TM_START : TM_HOURS;
+                        break;
+
+                    default:
+                        break;
                 }
+
             }
+
             if (evt == ENC_EVT_SHORT_PRESS) {
-                if (s_set_field < TF_SECONDS) {
-                    s_set_field = (tm_field_t)(s_set_field + 1);
-                } else {
+                if (s_selected_field < TM_START) {
+                    s_selected_field = (tm_field_t)(s_selected_field + 1);
+                }
+
+                else if(s_selected_field == TM_RESET){
+                    s_set_h = 0;
+                    s_set_m = 0;
+                    s_set_s = 0;
+                    s_selected_field = TM_HOURS;
+                    s_tm_state = TM_SET;
+                    
+                }
+                else {
                     /* Start timer */
                     if (set_total_us() > 0) {
                         s_end_us = esp_timer_get_time() + set_total_us();
-                        s_state  = TM_RUN;
+                        s_tm_state  = TM_RUN;
                     }
                 }
             }
-            if (evt == ENC_EVT_LONG_PRESS) { ui_manager_goto(SCREEN_MENU); return; }
+
+            if (evt == ENC_EVT_LONG_PRESS){
+                ui_manager_goto(SCREEN_MENU);
+                return;
+            }
+
             break;
 
-        /* ---- RUN: short press pauses, long press resets ---- */
+        /* RUN: short press pauses, long press resets */
         case TM_RUN:
             if (evt == ENC_EVT_SHORT_PRESS) {
                 s_remain_us = s_end_us - esp_timer_get_time();
-                s_state     = TM_PAUSE;
+                s_tm_state = TM_PAUSE;
             }
+
             if (evt == ENC_EVT_LONG_PRESS) {
-                s_state     = TM_SET;
-                s_set_field = TF_HOURS;
+                s_tm_state = TM_SET;
+                s_selected_field = TM_HOURS;
             }
+
             break;
 
-        /* ---- PAUSE: short press resumes, long press resets ---- */
+        /* PAUSE: short press resumes, long press resets */
         case TM_PAUSE:
             if (evt == ENC_EVT_SHORT_PRESS) {
-                s_end_us = esp_timer_get_time() + s_remain_us;
-                s_state  = TM_RUN;
+
+                if (s_selected_field == TM_START) {
+                    /* Resume timer */
+                    s_end_us = esp_timer_get_time() + s_remain_us;
+                    s_tm_state = TM_RUN;
+                }
+                else if (s_selected_field == TM_RESET) {
+                    /* Reset timer */
+                    s_tm_state = TM_SET;
+
+                    s_set_h = 0;
+                    s_set_m = 0;
+                    s_set_s = 0;
+
+                    s_selected_field = TM_HOURS;
+                }
             }
-            if (evt == ENC_EVT_LONG_PRESS) {
-                s_state     = TM_SET;
-                s_set_field = TF_HOURS;
+
+            else if(evt == ENC_EVT_CW || evt == ENC_EVT_CCW){
+                int dir = (evt == ENC_EVT_CW) ? 1 : -1;
+                s_selected_field = (dir == 1) ?  TM_RESET : TM_START;
             }
+
+            else if (evt == ENC_EVT_LONG_PRESS) {
+                s_tm_state = TM_SET;
+                s_selected_field = TM_HOURS;
+            }
+
             break;
 
-        /* ---- DONE: any press silences and resets ---- */
+        /* DONE: any press silences and resets */
         case TM_DONE:
             alarm_engine_stop_buzz();
-            s_state     = TM_SET;
-            s_set_field = TF_HOURS;
+            s_tm_state = TM_SET;
+            s_selected_field = TM_HOURS;
             break;
     }
     s_dirty = true;
 }
 
-/* ---- tick (called ~60/s by ui_manager) ---- */
+/*  tick (called ~60/s by ui_manager) */
 void screen_timer_tick(void){
+
     /* Check countdown expiry */
-    if (s_state == TM_RUN) {
+    if (s_tm_state == TM_RUN) {
         int64_t remain = s_end_us - esp_timer_get_time();
+
         if (remain <= 0) {
-            s_state = TM_DONE;
+            s_tm_state = TM_DONE;
             alarm_engine_start_buzz();
             s_dirty = true;
-        } else {
+        }
+        else{
             s_dirty = true;   /* update every tick while running */
         }
     }
@@ -140,9 +210,8 @@ void screen_timer_tick(void){
     display_draw_text(2, 10, "TIMER");
     display_draw_hline(0, 12, 128);
 
-    u8g2_t *u = display_get_handle();
 
-    if (s_state == TM_SET) {
+    if (s_tm_state == TM_SET) {
         /* Editable H:M:S */
         char buf[12];
         snprintf(buf, sizeof(buf), "%02d:%02d:%02d", s_set_h, s_set_m, s_set_s);
@@ -151,25 +220,44 @@ void screen_timer_tick(void){
 
         /* Underline active field (approx widths for logisoso26: each digit ~16px, colon ~8px) */
         /* H=x4..35, M=x44..75, S=x84..115 */
-        int ux = (s_set_field == TF_HOURS) ? 4 : (s_set_field == TF_MINUTES) ? 44 : 84;
-        u8g2_DrawHLine(u, ux, 48, 30);
+        if(s_selected_field == TM_HOURS || s_selected_field == TM_MINUTES || s_selected_field == TM_SECONDS){
+            int ux = (s_selected_field == TM_HOURS) ? 6 : (s_selected_field == TM_MINUTES) ? 50 : 94;
+            display_draw_hline(ux, 48, 30);
+        }
 
         display_set_font(u8g2_font_6x10_tf);
-        if (s_set_field < TF_SECONDS)
-            display_draw_text(2, 62, "Press: next field");
-        else
-            display_draw_text(2, 62, "Press: START");
 
-    } else if (s_state == TM_DONE) {
+        if(s_selected_field == TM_START){
+            display_set_color(1);
+            display_draw_box(10, 50, 45, 13);
+            display_set_color(0);
+            display_draw_text(14, 60, "START");
+            display_set_color(1);
+            display_draw_text(84, 60, "RESET");
+        }
+    
+        else if(s_selected_field == TM_RESET){
+            display_draw_text(14, 60, "START");
+            display_set_color(1);
+            display_draw_box(80, 50, 40, 13);
+            display_set_color(0);
+            display_draw_text(84, 60, "RESET");
+            display_set_color(1);
+        }
+
+    }
+
+    else if(s_tm_state == TM_DONE){
         display_set_font(u8g2_font_9x15B_tf);
         display_draw_text(20, 40, "TIME'S UP!");
         display_set_font(u8g2_font_6x10_tf);
-        display_draw_text(10, 58, "Press any key to stop");
 
-    } else {
+
+    }
+    else {
         /* RUN or PAUSE */
         int h, m, s;
-        int64_t remain = (s_state == TM_RUN) ? (s_end_us - esp_timer_get_time()) : s_remain_us;
+        int64_t remain = (s_tm_state == TM_RUN) ? (s_end_us - esp_timer_get_time()) : s_remain_us;
         remain_to_hms(remain, &h, &m, &s);
 
         char buf[12];
@@ -178,19 +266,38 @@ void screen_timer_tick(void){
         display_draw_text(4, 46, buf);
 
         display_set_font(u8g2_font_6x10_tf);
-        if (s_state == TM_PAUSE) {
-            display_draw_text(2, 62, "PAUSED  Press=resume");
-        } else {
-            display_draw_text(2, 62, "Press=pause  Hold=reset");
+        
+
+        if(s_tm_state == TM_RUN){
+            /* Progress bar */
+            int total_s = s_set_h * 3600 + s_set_m * 60 + s_set_s;
+            int rem_s   = h * 3600 + m * 60 + s;
+            if (total_s > 0) {
+                int bar_w = (int)((128LL * rem_s) / total_s);
+                display_draw_frame(0, 54, 128, 5);
+                display_draw_box(0, 54, bar_w, 5);
+            }
         }
 
-        /* Progress bar */
-        int total_s = s_set_h * 3600 + s_set_m * 60 + s_set_s;
-        int rem_s   = h * 3600 + m * 60 + s;
-        if (total_s > 0) {
-            int bar_w = (int)((128LL * rem_s) / total_s);
-            u8g2_DrawFrame(u, 0, 54, 128, 5);
-            u8g2_DrawBox(u,   0, 54, bar_w, 5);
+        else if(s_tm_state == TM_PAUSE){
+            display_set_color(1);
+            display_draw_box(10, 50, 45, 13);
+            display_set_color(0);
+            display_draw_text(14, 60, "RESUME");
+            display_set_color(1);
+            display_draw_text(84, 60, "RESET");
+    
+        }
+        if(s_tm_state == TM_PAUSE && s_selected_field == TM_RESET){
+            display_set_color(0);
+            display_draw_box(10, 50, 45, 13);
+            display_set_color(1);
+            display_draw_text(14, 60, "RESUME");
+            display_set_color(1);
+            display_draw_box(80, 50, 40, 13);
+            display_set_color(0);
+            display_draw_text(84, 60, "RESET");
+            display_set_color(1);
         }
     }
 
