@@ -10,6 +10,9 @@
 #include "rtc_ds3231.h"
 #include "i2c_hal.h"
 #include "config.h"
+#include "http_ota.h"
+#include "nvs_flash.h"
+#include "app_wifi.h"
 
 static const char *TAG = "main";
 
@@ -18,7 +21,26 @@ ds3231_handle_t ds3231_handle;
 rtc_time_t g_time;
 rtc_date_t g_date;
 
+#define HTTP_OTA_TASK_STACK_SIZE      8096
+#define HTTP_OTA_TASK_PRIORITY         4
+
+
+TaskHandle_t httpOtaTaskHandle;
+StaticTask_t httpOtaTaskBuffer;
+StackType_t httpOtaTaskStack[HTTP_OTA_TASK_STACK_SIZE];
+
+
 void app_main(void){
+
+    //Initialize NVS
+    esp_err_t ret = nvs_flash_init();
+    if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
+        ESP_ERROR_CHECK(nvs_flash_erase());
+        ret = nvs_flash_init();
+    }
+    ESP_ERROR_CHECK(ret);
+
+
     /* Init I2C hal */
     ESP_ERROR_CHECK(i2c_hal_init());
 
@@ -42,4 +64,7 @@ void app_main(void){
     ui_manager_start(enc_q);
     ESP_LOGI(TAG, "UI manager started");
 
+    connect_to_wifi();
+
+    httpOtaTaskHandle = xTaskCreateStatic(http_ota_task, "http_ota_task", HTTP_OTA_TASK_STACK_SIZE, NULL, HTTP_OTA_TASK_PRIORITY, httpOtaTaskStack, &httpOtaTaskBuffer);
 }

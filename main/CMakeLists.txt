@@ -11,7 +11,10 @@ idf_component_register(
         "ui/screen_alarms.c"
         "ui/screen_timer.c"
         "ui/screen_stopwatch.c"
+        "ui/screen_fw_update.c"
         "app/alarm_engine.c"
+        "app/http_ota.c"
+        "app/app_wifi.c"
 
     INCLUDE_DIRS
         "."
@@ -22,4 +25,5 @@ idf_component_register(
 
     REQUIRES
         u8g2 driver esp_driver_gpio esp_driver_spi esp_driver_i2c rtc_ds3231 esp_timer i2c_hal
+        esp_https_ota app_update esp_wifi esp_event nvs_flash mbedtls
     )

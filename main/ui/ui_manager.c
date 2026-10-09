@@ -8,6 +8,7 @@
 #include "screen_alarms.h"
 #include "screen_timer.h"
 #include "screen_stopwatch.h"
+#include "screen_fw_update.h"
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -30,6 +31,7 @@ static const screen_desc_t k_screens[] = {
     [SCREEN_ALARMS] = {screen_alarms_enter, screen_alarms_event, screen_alarms_tick},
     [SCREEN_TIMER] = {screen_timer_enter, screen_timer_event, screen_timer_tick},
     [SCREEN_STOPWATCH] = {screen_stopwatch_enter, screen_stopwatch_event, screen_stopwatch_tick},
+    [SCREEN_FW_UPDATE] = {screen_fw_update_enter, screen_fw_update_event, screen_fw_update_tick},
 };
 #define N_SCREENS (sizeof(k_screens) / sizeof(k_screens[0]))  // number of screens
 

@@ -10,6 +10,7 @@ typedef enum {
     SCREEN_ALARMS,
     SCREEN_TIMER,
     SCREEN_STOPWATCH,
+    SCREEN_FW_UPDATE,
 } screen_id_t;
 
 /**

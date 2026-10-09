@@ -17,6 +17,7 @@ static const menu_item_t k_items[] = {
     { "Alarms",    SCREEN_ALARMS    },
     { "Timer",     SCREEN_TIMER     },
     { "Stopwatch", SCREEN_STOPWATCH },
+    { "FW Update", SCREEN_FW_UPDATE },
 };
 #define N_ITEMS   (sizeof(k_items) / sizeof(k_items[0]))
 #define ROW_H     13   /* pixels per row */
