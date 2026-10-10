@@ -66,5 +66,5 @@ void app_main(void){
 
     connect_to_wifi();
 
-    httpOtaTaskHandle = xTaskCreateStatic(http_ota_task, "http_ota_task", HTTP_OTA_TASK_STACK_SIZE, NULL, HTTP_OTA_TASK_PRIORITY, httpOtaTaskStack, &httpOtaTaskBuffer);
+    // httpOtaTaskHandle = xTaskCreateStatic(http_ota_task, "http_ota_task", HTTP_OTA_TASK_STACK_SIZE, NULL, HTTP_OTA_TASK_PRIORITY, httpOtaTaskStack, &httpOtaTaskBuffer);
 }

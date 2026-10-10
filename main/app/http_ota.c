@@ -2,11 +2,11 @@
 #include "esp_log.h"
 #include "esp_https_ota.h"
 #include "esp_crt_bundle.h"
+#include "config.h"
 
 
 static const char *TAG = "http_ota";
 
-#define FIRMWARE_UPGRADE_URL            "https://github.com/amanprasad2707/esp_clock/releases/latest/download/esp_clock.bin"
 
 
 void http_ota_task(void *arg){
