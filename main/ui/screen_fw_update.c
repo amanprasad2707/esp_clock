@@ -19,6 +19,9 @@
 #include "esp_https_ota.h"
 #include "esp_http_client.h"
 #include "esp_crt_bundle.h"
+#include "config.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
 #include "esp_system.h"
 
 static const char *TAG = "screen_fw_update";
@@ -41,12 +44,15 @@ typedef enum {
     FW_SCREEN_NO_UPDATE,
     FW_SCREEN_ERROR,
     FW_SCREEN_CONFIRM,
-    FW_SCREEN_INSTALLING
+    FW_SCREEN_INSTALLING,
+    FW_SCREEN_OTA_DONE,
 } fw_screen_state_t;
 
 static volatile fw_screen_state_t s_state = FW_SCREEN_IDLE;
 
 static bool s_select_yes = true;
+
+static volatile int s_restart_countdown = -1;
 
 static char s_installed_version[32] = {0};
 static char s_latest_version[32] = {0};
@@ -156,8 +162,7 @@ static void start_firmware_check_task(void){
         s_check_task_handle = NULL;
         s_state = FW_SCREEN_ERROR;
 
-        ESP_LOGE(TAG,
-                 "Failed to create firmware check task");
+        ESP_LOGE(TAG, "Failed to create firmware check task");
     }
 }
 
@@ -195,22 +200,33 @@ static void firmware_ota_task(void *arg){
     free(url);
 
     if (err == ESP_OK) {
-        ESP_LOGI(TAG,
-                 "OTA successful. Restarting device.");
+        ESP_LOGI(TAG, "OTA successful.");
+        s_state = FW_SCREEN_OTA_DONE;
 
-        /*
-         * esp_https_ota() has completed successfully.
-         * Restart into the newly installed firmware.
-         */
+        TickType_t start_tick = xTaskGetTickCount();
+
+        while (1) {
+            TickType_t elapsed_ticks = xTaskGetTickCount() - start_tick;
+            uint32_t elapsed_ms = (uint32_t)pdTICKS_TO_MS(elapsed_ticks);
+
+            if (elapsed_ms >= ESP_RESTART_TIMEOUT_MS) {
+                break;
+            }
+
+            s_restart_countdown = (ESP_RESTART_TIMEOUT_MS - elapsed_ms + 999) / 1000;
+            vTaskDelay(pdMS_TO_TICKS(100));
+        }
+
+        s_restart_countdown = 0;
+
+        ESP_LOGI(TAG, "Restarting device...");
         esp_restart();
 
-        /* Normally never reached. */
         vTaskDelete(NULL);
         return;
     }
 
-    ESP_LOGE(TAG, "OTA failed: %s",
-             esp_err_to_name(err));
+    ESP_LOGE(TAG, "OTA failed: %s", esp_err_to_name(err));
 
     s_ota_task_handle = NULL;
     s_state = FW_SCREEN_ERROR;
@@ -428,6 +444,14 @@ void screen_fw_update_tick(void){
         display_draw_text(2, 22, "Update failed");
         display_draw_text(2, 30, "Check Wi-Fi/API");
         display_draw_text(2, 50, "Press: Retry");
+
+        break;
+
+    case FW_SCREEN_OTA_DONE:
+        char countdown_text[32];
+        display_draw_text(2, 25, "Update successful");
+        snprintf(countdown_text, sizeof(countdown_text), "Restarting in %ds", s_restart_countdown);
+        display_draw_text(2, 40, countdown_text);
 
         break;
 

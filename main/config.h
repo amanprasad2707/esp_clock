@@ -15,3 +15,5 @@
 
 #define RELEASE_ASSET_NAME "esp_clock.bin"
 #define HTTP_RESPONSE_BUFFER_SIZE 12288
+
+#define ESP_RESTART_TIMEOUT_MS    5000  // Delay before restarting after a successful OTA update, allowing the firmware update screen to remain visible before rebooting into the new firmware.
