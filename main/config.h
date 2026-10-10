@@ -11,7 +11,6 @@
 #define ROTARY_ENCODER_LONG_MS      600     // ms held to fire LONG_PRESS
 
 
-#define FIRMWARE_UPGRADE_URL            "https://github.com/amanprasad2707/esp_clock/releases/latest/download/esp_clock.bin"
 #define RELEASE_API_URL                 "https://api.github.com/repos/amanprasad2707/esp_clock/releases/latest"
 
 #define RELEASE_ASSET_NAME "esp_clock.bin"

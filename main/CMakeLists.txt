@@ -13,7 +13,6 @@ idf_component_register(
         "ui/screen_stopwatch.c"
         "ui/screen_fw_update.c"
         "app/alarm_engine.c"
-        "app/http_ota.c"
         "app/app_wifi.c"
         "app/app_fw_update_check.c"
 

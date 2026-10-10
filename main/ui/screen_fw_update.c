@@ -57,101 +57,18 @@ static TaskHandle_t s_ota_task_handle = NULL;
 
 /* ---------------- Function declarations ---------------- */
 
-static esp_err_t get_installed_version(char *version, size_t version_size);
-
-static int compare_versions(const char *a, const char *b);
-
 static void firmware_check_task(void *arg);
 static void firmware_ota_task(void *arg);
 
 static void start_firmware_check_task(void);
 static void start_firmware_ota_task(const char *url);
 
-/* =========================================================
- * Read currently installed firmware version
- * ========================================================= */
-
-static esp_err_t get_installed_version(char *version, size_t version_size){
-    if (version == NULL || version_size == 0) {
-        return ESP_ERR_INVALID_ARG;
-    }
-
-    const esp_partition_t *partition = esp_ota_get_running_partition();
-
-    if (partition == NULL) {
-        return ESP_FAIL;
-    }
-
-    esp_app_desc_t app_desc = {0};
-
-    esp_err_t err = esp_ota_get_partition_description(partition, &app_desc);
-
-    if (err != ESP_OK) {
-        return err;
-    }
-
-    int written = snprintf(version, version_size, "%s", app_desc.version);
-
-    if (written < 0 || (size_t)written >= version_size) {
-        return ESP_ERR_INVALID_SIZE;
-    }
-
-    return ESP_OK;
-}
-
-/* =========================================================
- * Compare numeric versions: major.minor.patch
- *
- * Returns:
- *   1  -> a is newer
- *   0  -> versions are equal
- *  -1  -> b is newer
- *  -2  -> invalid version format
- * ========================================================= */
-
-static int compare_versions(
-    const char *a,
-    const char *b)
-{
-    unsigned int a_major, a_minor, a_patch;
-    unsigned int b_major, b_minor, b_patch;
-
-    char extra;
-
-    if (a == NULL || b == NULL) {
-        return -2;
-    }
-
-    if (sscanf(a, "%u.%u.%u%c",
-               &a_major, &a_minor, &a_patch,
-               &extra) != 3 ||
-        sscanf(b, "%u.%u.%u%c",
-               &b_major, &b_minor, &b_patch,
-               &extra) != 3) {
-        return -2;
-    }
-
-    if (a_major != b_major) {
-        return a_major > b_major ? 1 : -1;
-    }
-
-    if (a_minor != b_minor) {
-        return a_minor > b_minor ? 1 : -1;
-    }
-
-    if (a_patch != b_patch) {
-        return a_patch > b_patch ? 1 : -1;
-    }
-
-    return 0;
-}
 
 /* =========================================================
  * GitHub release-check task
  * ========================================================= */
 
-static void firmware_check_task(void *arg)
-{
+static void firmware_check_task(void *arg){
     (void)arg;
 
     fw_release_info_t release = {0};
@@ -160,17 +77,13 @@ static void firmware_check_task(void *arg)
     esp_err_t err = fw_check_latest_release(&release);
 
     if (err != ESP_OK) {
-        ESP_LOGE(TAG,
-                 "Release check failed: %s",
-                 esp_err_to_name(err));
+        ESP_LOGE(TAG, "Release check failed: %s", esp_err_to_name(err));
 
         s_state = FW_SCREEN_ERROR;
         goto cleanup;
     }
 
-    err = get_installed_version(
-        installed_version,
-        sizeof(installed_version));
+    err = get_installed_version(installed_version, sizeof(installed_version));
 
     if (err != ESP_OK) {
         ESP_LOGE(TAG, "Cannot read installed version");
@@ -179,15 +92,10 @@ static void firmware_check_task(void *arg)
         goto cleanup;
     }
 
-    int result = compare_versions(
-        release.version,
-        installed_version);
+    int result = compare_versions(release.version, installed_version);
 
     if (result == -2) {
-        ESP_LOGE(TAG,
-                 "Invalid version: installed=%s latest=%s",
-                 installed_version,
-                 release.version);
+        ESP_LOGE(TAG, "Invalid version: installed=%s latest=%s", installed_version, release.version);
 
         s_state = FW_SCREEN_ERROR;
         goto cleanup;
@@ -198,33 +106,23 @@ static void firmware_check_task(void *arg)
      * so the UI sees the updated information.
      */
 
-    snprintf(s_installed_version,
-             sizeof(s_installed_version),
-             "%s", installed_version);
+    snprintf(s_installed_version, sizeof(s_installed_version), "%s", installed_version);
 
-    snprintf(s_latest_version,
-             sizeof(s_latest_version),
-             "%s", release.version);
+    snprintf(s_latest_version, sizeof(s_latest_version), "%s", release.version);
 
-    snprintf(s_download_url,
-             sizeof(s_download_url),
-             "%s", release.bin_url);
+    snprintf(s_download_url, sizeof(s_download_url), "%s", release.bin_url);
 
     if (result > 0) {
-        ESP_LOGI(TAG, "New firmware available: %s",
-                 s_latest_version);
+        ESP_LOGI(TAG, "New firmware available: %s", s_latest_version);
 
         s_state = FW_SCREEN_AVAILABLE;
     }
     else if (result == 0) {
         ESP_LOGI(TAG, "Firmware is up to date");
-
         s_state = FW_SCREEN_UP_TO_DATE;
     }
     else {
-        ESP_LOGW(TAG,
-                 "Installed firmware is newer than GitHub release");
-
+        ESP_LOGW(TAG, "Installed firmware is newer than GitHub release");
         s_state = FW_SCREEN_NO_UPDATE;
     }
 
@@ -237,8 +135,7 @@ cleanup:
  * Start release-check task
  * ========================================================= */
 
-static void start_firmware_check_task(void)
-{
+static void start_firmware_check_task(void){
     if (s_check_task_handle != NULL ||
         s_state == FW_SCREEN_CHECKING ||
         s_state == FW_SCREEN_INSTALLING) {
@@ -395,19 +292,14 @@ void screen_fw_update_event(encoder_event_t evt){
 
     case ENC_EVT_SHORT_PRESS:
 
-        if (s_state == FW_SCREEN_IDLE ||
-            s_state == FW_SCREEN_ERROR ||
-            s_state == FW_SCREEN_UP_TO_DATE) {
-
+        if (s_state == FW_SCREEN_IDLE || s_state == FW_SCREEN_ERROR || s_state == FW_SCREEN_UP_TO_DATE) {
             start_firmware_check_task();
         }
         else if (s_state == FW_SCREEN_AVAILABLE) {
-
             s_select_yes = true;
             s_state = FW_SCREEN_CONFIRM;
         }
         else if (s_state == FW_SCREEN_CONFIRM) {
-
             if (s_select_yes) {
                 start_firmware_ota_task(s_download_url);
             }
@@ -453,30 +345,26 @@ void screen_fw_update_tick(void){
 
     display_clear();
 
+    display_clear();
+    display_set_font(u8g2_font_6x10_tf);
+    display_draw_text(2, 10, "FIRMWARE UPDATE");
+    display_draw_hline(0, 12, 128);
+
     switch (s_state) {
 
     case FW_SCREEN_IDLE:
-
-        display_draw_text(2, 10, "Firmware Update");
-
-        snprintf(buf, sizeof(buf), "Installed: %s",
-                 s_installed_version);
-
+        snprintf(buf, sizeof(buf), "Installed: %s", s_installed_version);
         display_draw_text(2, 26, buf);
         display_draw_text(2, 44, "Press: Check update");
 
         break;
 
     case FW_SCREEN_CHECKING:
-
-        display_draw_text(2, 10, "Firmware Update");
-        display_draw_text(2, 30, "Checking GitHub...");
+        display_draw_text(2, 30, "Checking...");
 
         break;
 
     case FW_SCREEN_UP_TO_DATE:
-
-        display_draw_text(2, 10, "Firmware Update");
         display_draw_text(2, 30, "Firmware up to date");
         display_draw_text(2, 48, "Press: Check again");
 
@@ -484,55 +372,60 @@ void screen_fw_update_tick(void){
 
     case FW_SCREEN_AVAILABLE:
 
-        display_draw_text(2, 10, "Update Available");
+        display_draw_text(2, 22, "Update Available");
 
-        snprintf(buf, sizeof(buf), "Old: %s",
-                 s_installed_version);
+        snprintf(buf, sizeof(buf), "Old: %s", s_installed_version);
 
-        display_draw_text(2, 27, buf);
+        display_draw_text(2, 35, buf);
 
-        snprintf(buf, sizeof(buf), "New: %s",
-                 s_latest_version);
+        snprintf(buf, sizeof(buf), "New: %s", s_latest_version);
 
-        display_draw_text(2, 40, buf);
-        display_draw_text(2, 58, "Press: Continue");
+        display_draw_text(2, 48, buf);
+        display_set_color(1);
+        display_draw_box(0, 54, 55, 10);
+        display_set_color(0);
+        display_draw_text(2, 62, "Continue");
+        display_set_color(1);
 
         break;
 
     case FW_SCREEN_CONFIRM:
+        display_draw_text(2, 22, "Install update?");
+        snprintf(buf, sizeof(buf), "Version: %s", s_latest_version);
+        display_draw_text(2, 34, buf);
+        if(s_select_yes){
+            display_draw_box(2, 54, 25, 10);
+            display_set_color(0);
+            display_draw_text(5, 62, "Yes");
+            display_set_color(1);
+            display_draw_text(85, 62, "No");
 
-        display_draw_text(2, 10, "Install update?");
-
-        snprintf(buf, sizeof(buf), "Version: %s",
-                 s_latest_version);
-
-        display_draw_text(2, 27, buf);
-
-        display_draw_text(
-            2, 58,
-            s_select_yes ? ">Yes     No" : " Yes    >No");
+        }
+        else{
+            display_draw_box(80, 54, 25, 10);
+            display_set_color(0);
+            display_draw_text(85, 62, "No");
+            display_set_color(1);
+            display_draw_text(2, 62, "Yes");
+        }
 
         break;
 
     case FW_SCREEN_INSTALLING:
-
-        display_draw_text(2, 10, "Firmware Update");
         display_draw_text(2, 30, "Installing...");
         display_draw_text(2, 48, "Please wait");
 
         break;
 
     case FW_SCREEN_NO_UPDATE:
-
-        display_draw_text(2, 10, "No newer release");
+        display_draw_text(2, 22, "No newer release");
         display_draw_text(2, 30, "Installed is newer");
         display_draw_text(2, 50, "Press to return");
 
         break;
 
     case FW_SCREEN_ERROR:
-
-        display_draw_text(2, 10, "Update failed");
+        display_draw_text(2, 22, "Update failed");
         display_draw_text(2, 30, "Check Wi-Fi/API");
         display_draw_text(2, 50, "Press: Retry");
 

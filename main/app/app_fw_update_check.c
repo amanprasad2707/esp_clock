@@ -5,6 +5,8 @@
 #include "esp_log.h"
 #include "esp_err.h"
 #include "cJSON.h"
+#include "esp_app_desc.h"
+#include "esp_ota_ops.h"
 #include "config.h"
 
 
@@ -157,4 +159,82 @@ esp_err_t fw_check_latest_release(fw_release_info_t *release){
     ESP_LOGI(TAG, "Firmware URL: %s", release->bin_url);
 
     return ESP_OK;
+}
+
+
+
+/* =========================================================
+ * Read currently installed firmware version
+ * ========================================================= */
+
+esp_err_t get_installed_version(char *version, size_t version_size){
+    if (version == NULL || version_size == 0) {
+        return ESP_ERR_INVALID_ARG;
+    }
+
+    const esp_partition_t *partition = esp_ota_get_running_partition();
+
+    if (partition == NULL) {
+        return ESP_FAIL;
+    }
+
+    esp_app_desc_t app_desc = {0};
+
+    esp_err_t err = esp_ota_get_partition_description(partition, &app_desc);
+
+    if (err != ESP_OK) {
+        return err;
+    }
+
+    int written = snprintf(version, version_size, "%s", app_desc.version);
+
+    if (written < 0 || (size_t)written >= version_size) {
+        return ESP_ERR_INVALID_SIZE;
+    }
+
+    return ESP_OK;
+}
+
+/* 
+ * Compare numeric versions: major.minor.patch
+ *
+ * Returns:
+ *   1  -> a is newer
+ *   0  -> versions are equal
+ *  -1  -> b is newer
+ *  -2  -> invalid version format
+ */
+
+int compare_versions(const char *a, const char *b){
+    unsigned int a_major, a_minor, a_patch;
+    unsigned int b_major, b_minor, b_patch;
+
+    char extra;
+
+    if (a == NULL || b == NULL) {
+        return -2;
+    }
+
+    if (sscanf(a, "%u.%u.%u%c",
+               &a_major, &a_minor, &a_patch,
+               &extra) != 3 ||
+        sscanf(b, "%u.%u.%u%c",
+               &b_major, &b_minor, &b_patch,
+               &extra) != 3) {
+        return -2;
+    }
+
+    if (a_major != b_major) {
+        return a_major > b_major ? 1 : -1;
+    }
+
+    if (a_minor != b_minor) {
+        return a_minor > b_minor ? 1 : -1;
+    }
+
+    if (a_patch != b_patch) {
+        return a_patch > b_patch ? 1 : -1;
+    }
+
+    return 0;
 }

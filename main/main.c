@@ -10,7 +10,6 @@
 #include "rtc_ds3231.h"
 #include "i2c_hal.h"
 #include "config.h"
-#include "http_ota.h"
 #include "nvs_flash.h"
 #include "app_wifi.h"
 
@@ -66,5 +65,4 @@ void app_main(void){
 
     connect_to_wifi();
 
-    // httpOtaTaskHandle = xTaskCreateStatic(http_ota_task, "http_ota_task", HTTP_OTA_TASK_STACK_SIZE, NULL, HTTP_OTA_TASK_PRIORITY, httpOtaTaskStack, &httpOtaTaskBuffer);
 }
